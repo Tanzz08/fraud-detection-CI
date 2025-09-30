@@ -39,12 +39,14 @@ jobs:
           pip install mlflow
 
       - name: Run mlflow project
+        working-directory: MLproject
         run: |
           mlflow run . --env-manager=local \
             -P X_train=$X_TRAIN \
             -P X_test=$X_TEST \
             -P y_train=$Y_TRAIN \
             -P y_test=$Y_TEST
+
 
       - name: Set up Git LFS
         run: |
