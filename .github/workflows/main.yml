@@ -19,22 +19,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout repo
       - uses: actions/checkout@v3
 
-      # Setup Git LFS & pull dataset
-      - name: Set up Git LFS
-        run: |
-          git lfs install
-          git lfs pull
-
-      # Setup Python
       - name: Set up Python 3.12.7
         uses: actions/setup-python@v4
         with:
           python-version: "3.12.7"
       
-      # Debug environment paths
       - name: Check Env
         run: |
           echo "X_TRAIN=$X_TRAIN"
@@ -42,13 +33,11 @@ jobs:
           echo "Y_TRAIN=$Y_TRAIN"
           echo "Y_TEST=$Y_TEST"
 
-      # Install mlflow & dependencies
-      - name: Install dependencies
+      - name: Install mlflow
         run: |
           python -m pip install --upgrade pip
-          pip install mlflow pandas scikit-learn
+          pip install mlflow
 
-      # Run MLflow project
       - name: Run mlflow project
         working-directory: MLproject
         run: |
@@ -58,17 +47,17 @@ jobs:
             -P y_train=$Y_TRAIN \
             -P y_test=$Y_TEST
 
-      # Track mlruns dengan Git LFS
-      - name: Track mlruns with Git LFS
+
+      - name: Set up Git LFS
         run: |
           git config --global user.name ${{ secrets.GIT_USERNAME }}
           git config --global user.email ${{ secrets.GIT_EMAIL }}
+          git lfs install
           git lfs track "mlruns/**"
           git add .gitattributes
-          git commit -m "Track mlruns with Git LFS" || true
+          git commit -m "Track large files in mlruns with Git LFS" || true
           git push origin main
 
-      #Save mlruns ke repo
       - name: Save mlruns to repo
         run: |
           git config --global user.name ${{ secrets.GIT_USERNAME }}
