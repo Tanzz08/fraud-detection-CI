@@ -8,20 +8,12 @@ on:
     branches:
       - main
 
-env:
-  X_TRAIN: "MLproject/X_train.csv"
-  X_TEST: "MLproject/X_test.csv"
-  Y_TRAIN: "MLproject/y_train.csv"
-  Y_TEST: "MLproject/y_test.csv"
-
 jobs: 
   build: 
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
-        with: 
-          lfs: true
 
       - name: Set up Python 3.12.7
         uses: actions/setup-python@v4
@@ -40,10 +32,21 @@ jobs:
           python -m pip install --upgrade pip
           pip install mlflow
 
+      - name: Download dataset from Google Drive
+        run: |
+          gdown --id 1TIhAsaLkjXym1x1gOMFG42brZa_PqaIi -O MLproject/X_train.csv
+          gdown --id 1RobcmfZT0cFYz2hJeFm-ric0aLL-A0YY -O MLproject/X_test.csv
+          gdown --id 1h6GbZfMsNRLPZmhY8mWLmrOA5RAYhHqo -O MLproject/y_train.csv
+          gdown --id 1P6Mea896xnfeVKOV5hNMHRoiF1JSl2wQ -O MLproject/y_test.csv
+
       - name: Run mlflow project
         working-directory: MLproject
         run: |
-          mlflow run . --env-manager=local 
+          mlflow run . --env-manager=local \
+            -P X_train=MLproject/X_train.csv \
+            -P X_test=MLproject/X_test.csv \
+            -P y_train=MLproject/y_train.csv \
+            -P y_test=MLproject/y_test.csv
 
 
       - name: Set up Git LFS
