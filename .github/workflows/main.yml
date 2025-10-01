@@ -1,0 +1,60 @@
+name: CI
+
+on: 
+  push: 
+    branches: 
+      - main
+  pull_request: 
+    branches:
+      - main
+
+jobs: 
+  build: 
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python 3.12.7
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12.7"
+
+      - name: Install mlflow
+        run: |
+          python -m pip install --upgrade pip
+          pip install mlflow
+          pip install mlflow gdown
+          pip install mlflow dagshub 
+
+      - name: Set MLflow Tracking URI
+        run: 
+          dagshub login --token ${{ secrets.dagshub }} 
+
+      - name: Download dataset from Google Drive
+        run: |
+          gdown --id 1TIhAsaLkjXym1x1gOMFG42brZa_PqaIi -O MLproject/X_train.csv
+          gdown --id 1RobcmfZT0cFYz2hJeFm-ric0aLL-A0YY -O MLproject/X_test.csv
+          gdown --id 1h6GbZfMsNRLPZmhY8mWLmrOA5RAYhHqo -O MLproject/y_train.csv
+          gdown --id 1P6Mea896xnfeVKOV5hNMHRoiF1JSl2wQ -O MLproject/y_test.csv
+
+      - name: Run mlflow project
+        working-directory: MLproject
+        run: |
+          mlflow run . --env-manager=local \
+            -P X_train=MLproject/X_train.csv \
+            -P X_test=MLproject/X_test.csv \
+            -P y_train=MLproject/y_train.csv \
+            -P y_test=MLproject/y_test.csv
+
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
+        
+      - name: Upload to Google Drive
+        env:
+          GDRIVE_CREDENTIALS: ${{ secrets.GDRIVE_CREDENTIALS }}  # Mengambil kredensial dari GitHub Secrets
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}  # Mengambil kredensial dari GitHub Secrets
+        run: |
+          python MLproject/upload_to_gdrive.py
+
